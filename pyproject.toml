@@ -1,0 +1,26 @@
+[project]
+name = "jw-summarize-cloud"
+version = "0.1.0"
+description = "Cloud Run pipeline for JW summary generation"
+requires-python = ">=3.12"
+dependencies = [
+    "Flask>=3.1",
+    "gunicorn>=23.0",
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+    "langchain>=0.3",
+    "langchain-google-vertexai>=2.0",
+    "langchain-openai>=0.3",
+    "google-cloud-aiplatform>=1.82",
+    "google-api-python-client>=2.120",
+    "google-auth>=2.30",
+    "google-cloud-storage>=2.19",
+    "google-cloud-tasks>=2.19",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

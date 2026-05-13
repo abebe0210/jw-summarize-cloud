@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+.env
+
+local-output/
+_subtitles_*.txt
+_summarize_transcript.txt
