@@ -13,7 +13,7 @@ This repository owns the human-facing Google Form -> Cloud Run summary pipeline.
 Default Cloud Run entrypoint:
 
 ```text
-gunicorn --bind :8080 tools.jw_summarize.webapp:app
+gunicorn --bind :8080 --timeout 1800 tools.jw_summarize.webapp:app
 ```
 
 If the package is renamed, update docs, tests, and Cloud Run settings together.

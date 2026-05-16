@@ -37,7 +37,7 @@ Then connect that repository to Cloud Run. Do not connect `jw-agent` to Cloud Ru
 Cloud Run entrypoint, if keeping the migrated package path:
 
 ```text
-gunicorn --bind :8080 tools.jw_summarize.webapp:app
+gunicorn --bind :8080 --timeout 1800 tools.jw_summarize.webapp:app
 ```
 
 If you later rename the package to `jw_summarize_cloud`, update the entrypoint and imports together.
@@ -56,7 +56,7 @@ If you later rename the package to `jw_summarize_cloud`, update the entrypoint a
 ```bash
 uv sync --extra dev
 uv run pytest
-uv run gunicorn --bind :8080 tools.jw_summarize.webapp:app
+uv run gunicorn --bind :8080 --timeout 1800 tools.jw_summarize.webapp:app
 ```
 
 For Cloud Run, set environment variables from `.env.example` and follow `docs/deploy/cloud-pipeline-gcp-ui.md`.
