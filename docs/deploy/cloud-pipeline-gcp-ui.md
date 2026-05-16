@@ -80,6 +80,10 @@ GCP 側の作成・デプロイはブラウザ UI で進めます。ただし、
 
 `<PROJECT_ID>` は Google Cloud プロジェクト ID に置き換えてください。
 
+すでに別名で作った場合は、その名前を以降も一貫して使ってください。たとえば Cloud Run サービスを `jw-summarize-cloud` として作った場合、手順中の `jw-summarize-web` は `jw-summarize-cloud` に読み替えます。
+
+注意: Google Cloud Console のプロジェクト選択には「表示名」と「プロジェクト ID」があります。API、サービスアカウントのメールアドレス、Script Properties には表示名ではなくプロジェクト ID を使います。たとえば表示名が `jw-agent` で、プロジェクト ID が `jw-agent-495305` の場合、使う値は `jw-agent-495305` です。Cloud Run URL に含まれる数字は `PROJECT_NUMBER` で、これもプロジェクト ID とは別物です。
+
 ## 1. 事前にメモしておく値
 
 作業中に何度も使うため、先にメモを作っておくと楽です。
@@ -127,6 +131,7 @@ GCP 側の作成・デプロイはブラウザ UI で進めます。ただし、
 
 - API 有効化直後は数十秒から数分、画面に反映されないことがあります。
 - 権限エラーが出る場合、自分のアカウントに `Service Usage Admin` 相当の権限が足りない可能性があります。
+- Vertex AI 呼び出し時に `Agent Platform API has not been used... service: aiplatform.googleapis.com` と出る場合も、ここで `Vertex AI API` を有効化します。
 
 ## 3. サービスアカウントを作る
 
@@ -406,15 +411,15 @@ Cloud Run の公式ドキュメントでは、Cloud Run コンソールから Cl
 | Branch | `^main$` または `^deploy/prod$` など、`jw-summarize-cloud` のデプロイ対象ブランチに合わせた正規表現 |
 | Build Type | `Python via Google Cloud's buildpacks` |
 | Build context directory | `/` または空欄 |
-| Entrypoint | `gunicorn --bind :8080 tools.jw_summarize.webapp:app` |
+| Entrypoint | `gunicorn --bind :8080 --timeout 1800 tools.jw_summarize.webapp:app` |
 | Function target | 空欄 |
 
-`Entrypoint` は重要です。Cloud Run はコンテナ内の `PORT` に HTTP サーバーが listen することを期待します。このアプリは Flask なので、`gunicorn` で Flask app を起動します。
+`Entrypoint` は重要です。Cloud Run はコンテナ内の `PORT` に HTTP サーバーが listen することを期待します。このアプリは Flask なので、`gunicorn` で Flask app を起動します。要約処理は 30 秒を超えることがあるため、Cloud Run のリクエスト タイムアウトだけでなく Gunicorn 側にも `--timeout 1800` を入れます。
 
 上の値は、`jw-agent` から移行したあとも Python package path を `tools.jw_summarize.webapp` として残す場合の例です。`jw-summarize-cloud` 側で `jw_summarize_cloud.webapp` のような package に整理した場合は、Entrypoint も次のように合わせて変更します。
 
 ```text
-gunicorn --bind :8080 jw_summarize_cloud.webapp:app
+gunicorn --bind :8080 --timeout 1800 jw_summarize_cloud.webapp:app
 ```
 
 ビルド環境変数を設定できる欄が表示される場合は、以下も入れます。
@@ -456,6 +461,7 @@ gunicorn --bind :8080 jw_summarize_cloud.webapp:app
 | `VERTEX_PROJECT_ID` | `<PROJECT_ID>` |
 | `VERTEX_LOCATION` | `asia-northeast1` |
 | `VERTEX_HEAVY_MODEL` | `gemini-2.5-pro` |
+| `VERTEX_LIGHT_MODEL` | `gemini-2.5-flash` |
 | `GCP_PROJECT_ID` | `<PROJECT_ID>` |
 | `GCS_AUDIO_BUCKET` | `<AUDIO_BUCKET>` |
 | `SHEETS_MANAGEMENT_ID` | `<SHEET_ID>` |
@@ -468,6 +474,8 @@ gunicorn --bind :8080 jw_summarize_cloud.webapp:app
 | `CLOUD_RUN_AUDIENCE` | `https://placeholder.example` |
 
 初回は Cloud Run URL がまだ分からないため、`CLOUD_RUN_AUDIENCE` は仮値にします。デプロイ後に正しい Cloud Run URL へ更新します。
+
+`VERTEX_HEAVY_MODEL` に preview 版や未提供のモデル名を入れると、Cloud Run ログに `Publisher Model ... was not found or your project does not have access to it` が出て 500 になります。まずは `gemini-2.5-pro` で動作確認してください。
 
 設定してはいけない値:
 
@@ -501,7 +509,7 @@ gunicorn --bind :8080 jw_summarize_cloud.webapp:app
 |---|---|
 | Python 版が合わない | Buildpacks が Python 3.12 を使っているか |
 | `gunicorn` が見つからない | `pyproject.toml` の依存関係が読まれているか |
-| 起動後すぐ落ちる | Entrypoint が `gunicorn --bind :8080 tools.jw_summarize.webapp:app` か |
+| 起動後すぐ落ちる | Entrypoint が `gunicorn --bind :8080 --timeout 1800 tools.jw_summarize.webapp:app` か |
 
 ### 8.8 Cloud Run URL を取得する
 
@@ -548,6 +556,15 @@ CLOUD_RUN_AUDIENCE=https://jw-summarize-web-xxxxx-an.a.run.app
 6. `保存` を押す。
 
 これで、Cloud Tasks が `jw-summarize-tasks` として Cloud Run を呼べるようになります。
+
+`権限` タブが見つからない場合は、Cloud Run のサービス一覧に戻り、対象サービスの行を選択して右側の情報パネルから権限を編集します。画面構成が違って見つからない場合は Cloud Shell で次を実行します。
+
+```bash
+gcloud run services add-iam-policy-binding <SERVICE_NAME> \
+  --region=asia-northeast1 \
+  --member="serviceAccount:jw-summarize-tasks@<PROJECT_ID>.iam.gserviceaccount.com" \
+  --role="roles/run.invoker"
+```
 
 ## 9. Cloud Tasks キューをブラウザ UI で作る
 
@@ -774,9 +791,19 @@ Spreadsheet の `error` 列を見ます。
 | エラー | 原因 | 対処 |
 |---|---|---|
 | `Missing script property` | Script Properties の不足 | 手順 10.5 を見直す |
+| `Cloud Tasks enqueue failed: HTTP 400` | Apps Script から Cloud Tasks へ渡した値が不正 | `TASK_DISPATCH_DEADLINE_SECONDS` は `1800s` ではなく `1800`。`CLOUD_RUN_PROCESS_URL`、`CLOUD_RUN_AUDIENCE`、`CLOUD_TASKS_SERVICE_ACCOUNT` も確認 |
+| `Cloud Tasks enqueue failed: HTTP 404` | Apps Script が見ている project / location / queue / service account が存在しない | `GCP_PROJECT_ID` は表示名ではなくプロジェクト ID。`TASKS_LOCATION` と `TASKS_QUEUE_NAME` が実際のキューと一致するか確認 |
 | `Cloud Tasks enqueue failed: HTTP 403` | Apps Script 実行ユーザーに Cloud Tasks 権限がない | 手順 4.3 を見直す |
 | `GCS upload failed: HTTP 403` | Apps Script 実行ユーザーに GCS 権限がない | 手順 5.3 を見直す |
 | `Missing Drive file id` | 音声ファイル列名が違う、またはファイル添付でない | Form の質問名と Script Properties を確認 |
+
+Cloud Tasks のキューが見えているかは、Cloud Shell なら次で確認できます。
+
+```bash
+gcloud tasks queues describe jw-summarize-process \
+  --location=asia-northeast1 \
+  --project=<PROJECT_ID>
+```
 
 ### 12.2 `queued` のまま進まない
 
@@ -787,6 +814,8 @@ Cloud Tasks か Cloud Run 側で失敗しています。
 1. `Cloud Tasks` > `jw-summarize-process` でタスクが残っているか見る。
 2. `Cloud Run` > `jw-summarize-web` > `ログ` を見る。
 3. 120 分後に `failed` へ自動更新されるか見る。
+
+`Timed out waiting for successful Cloud Run completion after 120 minutes.` は Apps Script の監視処理が付けるエラーです。Cloud Tasks への投入は成功していますが、Cloud Run が `status=done` と `github_url` を Spreadsheet へ書き戻せていません。Cloud Run のリクエストログだけでなく、同じ時刻の stderr / application log も開いて traceback を確認します。
 
 ### 12.3 Cloud Run が 401 を返す
 
@@ -821,6 +850,8 @@ jw-summarize-runner@<PROJECT_ID>.iam.gserviceaccount.com
 
 閲覧者ではなく編集者が必要です。
 
+共有済みなのに読めない場合は、Cloud Run の最新リビジョンが本当に `RUNNER_SA` で動いているか確認します。実行サービスアカウントがデフォルトの `<PROJECT_NUMBER>-compute@developer.gserviceaccount.com` のままだと、`jw-summarize-runner@...` を共有していても効きません。
+
 ### 12.6 GitHub commit で失敗する
 
 | 原因 | 対処 |
@@ -844,6 +875,17 @@ Cloud Run の継続デプロイ設定を直すには:
 1. `Cloud Run` > `jw-summarize-web` を開く。
 2. `ソース` または `継続的デプロイ` の設定から `リポジトリ設定を編集` を開く。
 3. 必要に応じて `Cloud Build` > `トリガー` 側で設定を修正する。
+
+### 12.8 Vertex AI / Gemini で失敗する
+
+Cloud Run ログに次のようなエラーが出る場合は、Vertex AI 側の設定です。
+
+| ログ | 原因 | 対処 |
+|---|---|---|
+| `Agent Platform API has not been used... service: aiplatform.googleapis.com` | Vertex AI API が無効 | 手順 2.2 で `Vertex AI API` を有効化する |
+| `PermissionDenied` | Cloud Run 実行 SA に Vertex AI 権限がない | `RUNNER_SA` に `Vertex AI ユーザー` を付ける |
+| `Publisher Model ... was not found or your project does not have access to it` | `VERTEX_HEAVY_MODEL` が存在しない、または利用権限がない | `VERTEX_HEAVY_MODEL=gemini-2.5-pro` に戻す |
+| `WORKER TIMEOUT` | Gunicorn の worker timeout が短い | Entrypoint に `--timeout 1800` を入れる |
 
 ## 13. 運用
 
@@ -871,6 +913,30 @@ Cloud Run の継続デプロイ設定を直すには:
 5. `デプロイ` を押す。
 
 環境変数変更だけでも新しいリビジョンが作られます。
+
+例: Gemini モデルを安定版へ戻す。
+
+```text
+VERTEX_HEAVY_MODEL=gemini-2.5-pro
+VERTEX_LIGHT_MODEL=gemini-2.5-flash
+```
+
+Cloud Shell で環境変数だけ変更する場合:
+
+```bash
+gcloud run services update <SERVICE_NAME> \
+  --region=asia-northeast1 \
+  --update-env-vars="VERTEX_HEAVY_MODEL=gemini-2.5-pro,VERTEX_LIGHT_MODEL=gemini-2.5-flash"
+```
+
+`gcloud run services update` に `--clear-command` や `--clear-args` はありません。Cloud Run の command / args をコンテナ既定に戻す場合は、空文字を渡します。ただし、既定 Entrypoint を持たないイメージでは起動できなくなるため、通常は Cloud Run UI のリポジトリ設定で Entrypoint を明示的に直す方が安全です。
+
+```bash
+gcloud run services update <SERVICE_NAME> \
+  --region=asia-northeast1 \
+  --command="" \
+  --args=""
+```
 
 ### 13.3 GitHub token を更新する
 
