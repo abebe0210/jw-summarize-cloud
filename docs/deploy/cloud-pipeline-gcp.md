@@ -392,7 +392,7 @@ jw-summarize-runner@<PROJECT_ID>.iam.gserviceaccount.com
 以下を自分の環境に合わせます。
 
 ```bash
-export GITHUB_REPOSITORY="owner/repo"
+export GITHUB_REPOSITORY="abebe0210/obsidian-jw"
 export GITHUB_BRANCH="main"
 export OBSIDIAN_SUMMARY_DIR="01_Talks"
 export OBSIDIAN_TRANSCRIPT_DIR="05_Transcription"
@@ -914,7 +914,7 @@ gcloud run services describe "${SERVICE_NAME}" \
 
 | 原因 | 対処 |
 |---|---|
-| `GITHUB_REPOSITORY` が `owner/repo` 形式でない | Cloud Run env を直す |
+| `GITHUB_REPOSITORY` が `owner/repo` のまま、または実リポジトリではない | `abebe0210/obsidian-jw` のような実際の Vault リポジトリに直す |
 | token に Contents write がない | GitHub token 権限を直す |
 | branch 名が違う | `GITHUB_BRANCH` を直す |
 | 同時 push 競合 | Cloud Tasks の並列数を一時的に下げる |

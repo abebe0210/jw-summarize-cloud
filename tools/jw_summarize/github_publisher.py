@@ -15,6 +15,12 @@ class GitHubPublisher:
             raise ConfigError(
                 "GITHUB_TOKEN and GITHUB_REPOSITORY must be set for GitHub publishing."
             )
+        repository = (settings.github_repository or "").strip()
+        if repository == "owner/repo" or repository.count("/") != 1:
+            raise ConfigError(
+                "GITHUB_REPOSITORY must be the target Obsidian Vault repository "
+                "in owner/repo form, not the template value."
+            )
         self._settings = settings
         self._session = session or requests.Session()
         self._headers = {

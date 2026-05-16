@@ -99,7 +99,7 @@ GCP 側の作成・デプロイはブラウザ UI で進めます。ただし、
 | `SHEET_ID` | Spreadsheet URL の `/d/` と `/edit` の間 | Spreadsheet URL |
 | `CLOUD_RUN_URL` | `https://jw-summarize-web-xxxxx-an.a.run.app` | Cloud Run デプロイ後 |
 | `CLOUD_RUN_PROCESS_URL` | `<CLOUD_RUN_URL>/process` | Cloud Run URL から作る |
-| `GITHUB_REPOSITORY` | `owner/repo` | Obsidian Vault リポジトリ |
+| `GITHUB_REPOSITORY` | `abebe0210/obsidian-jw` | Obsidian Vault リポジトリ |
 | `GITHUB_BRANCH` | `main` | Obsidian Vault の保存先ブランチ |
 
 ## 2. 必要な API を有効化する
@@ -467,7 +467,7 @@ gunicorn --bind :8080 --timeout 1800 jw_summarize_cloud.webapp:app
 | `SHEETS_MANAGEMENT_ID` | `<SHEET_ID>` |
 | `TASKS_QUEUE_NAME` | `jw-summarize-process` |
 | `TASKS_LOCATION` | `asia-northeast1` |
-| `GITHUB_REPOSITORY` | `owner/repo` |
+| `GITHUB_REPOSITORY` | `abebe0210/obsidian-jw` |
 | `GITHUB_BRANCH` | `main` |
 | `OBSIDIAN_SUMMARY_DIR` | `01_Talks` |
 | `OBSIDIAN_TRANSCRIPT_DIR` | `05_Transcription` |
@@ -856,7 +856,7 @@ jw-summarize-runner@<PROJECT_ID>.iam.gserviceaccount.com
 
 | 原因 | 対処 |
 |---|---|
-| `GITHUB_REPOSITORY` が `owner/repo` 形式でない | Cloud Run の環境変数を直す |
+| `GITHUB_REPOSITORY` が `owner/repo` のまま、または実リポジトリではない | `abebe0210/obsidian-jw` のような実際の Vault リポジトリに直す |
 | token に Contents write がない | GitHub token 権限を直す |
 | branch 名が違う | `GITHUB_BRANCH` を直す |
 | Secret 参照に失敗 | `RUNNER_SA` に `jw-summarize-github-token` の Secret Accessor があるか確認 |
