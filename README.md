@@ -47,6 +47,7 @@ If you later rename the package to `jw_summarize_cloud`, update the entrypoint a
 - `tools/jw_summarize/`: Flask app and summarization pipeline
 - `tools/jw_subtitles/`: JW.org subtitle extraction used by URL input
 - `scripts/cloud_pipeline/`: Apps Script source
+- `docs/design/architecture.md`: cloud architecture diagrams, request sequences, and per-script roles / dependency graph
 - `docs/design/cloud-pipeline.md`: architecture and repo-boundary design
 - `docs/deploy/`: UI and CLI deployment guides
 - `tests/jw_summarize/`, `tests/jw_subtitles/`: focused tests copied from `jw-agent`

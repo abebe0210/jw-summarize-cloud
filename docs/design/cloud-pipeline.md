@@ -6,6 +6,9 @@
   - `jw-summarize-cloud`: Cloud Run / Apps Script / GCP デプロイ資産を管理する本番サービスリポジトリ
   - `jw-agent`: エージェントが各種自動化タスクを実行するハーネスリポジトリ
 - 関連既存ツール: `jw-agent` の `tools/jw_subtitles`, `tools/jw_summarize`(対象外: `tools/jw_podcast`)
+- 関連ドキュメント:
+  - [`docs/design/architecture.md`](architecture.md): 構成図 / シーケンス図 / モジュール依存グラフ / 各スクリプトの役割をまとめた図解版
+  - [`docs/deploy/cloud-pipeline-gcp-ui.md`](../deploy/cloud-pipeline-gcp-ui.md), [`docs/deploy/cloud-pipeline-gcp.md`](../deploy/cloud-pipeline-gcp.md): デプロイ手順
 
 ---
 
@@ -83,6 +86,8 @@ JW.org の動画 URL / テキスト / 音声ファイルを入力として、字
 移行直後は `jw-summarize-cloud` に `jw-agent` 由来の必要コードをコピーしてよい。コード重複が運用上の問題になった時点で、字幕取得・要約・ノート生成などの純粋ロジックだけを `jw-summarize-core` のような小さな共有パッケージへ切り出す。
 
 ### 3.1 構成図
+
+詳細な構成図 / シーケンス図 / モジュール依存グラフは [`architecture.md`](architecture.md) を参照。ここでは経路の俯瞰のみ示す。
 
 ```
 Human route (`jw-summarize-cloud`)
