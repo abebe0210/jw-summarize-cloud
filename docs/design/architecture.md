@@ -129,7 +129,7 @@ Cloud Run の Flask アプリ本体。`webapp.py` がエントリポイント、
 | `webapp.py` | Flask アプリ。`/healthz` と `/process` を提供。`/process` ペイロードを見て **Cloud 経路** と **直接呼び出し経路** を振り分ける | `auth`, `cloud_pipeline`, `config`, `exceptions`, `github_publisher`, `local_publisher`, `models`, `service` | `flask`, `python-dotenv` |
 | `cloud_pipeline.py` | Cloud Tasks からの `{row_id, sheet_id}` を受け、Sheet 行 → `ProcessingRequest` 化 → 要約実行 → Sheet 更新まで担当 | `audio`, `config`, `exceptions`, `github_publisher`, `models`, `publisher`, `sheets`, `service`, `title` | `requests`, `tools.jw_subtitles` |
 | `service.py` | 入力種別に応じて transcript を解決し、`SummarizationService` で要約 → ノート生成 → publish を直列実行 | `config`, `exceptions`, `models`, `obsidian`, `publisher`, `summarizer`, `title` | `tools.jw_subtitles` |
-| `summarizer.py` | LLM プロンプト（system + few-shot + human）を構築し Vertex/OpenAI を呼ぶ。Markdown 要約本体を返す | `config`, `exceptions`, `llm` | `langchain` |
+| `summarizer.py` | LLM プロンプト（system + few-shot + human）を構築し Vertex/OpenAI を呼ぶ。Markdown 要約本体を返す | `config`, `exceptions`, `llm` | `langchain-core` |
 | `llm.py` | provider/profile から `ChatVertexAI` または `ChatOpenAI` インスタンスを生成 | `config`, `exceptions` | `langchain-google-vertexai`, `langchain-openai`, `google-cloud-aiplatform` |
 | `audio.py` | GCS URI を Vertex AI Gemini に渡して日本語文字起こしを生成 | `config`, `exceptions` | `google-cloud-aiplatform` (`vertexai.generative_models`) |
 | `sheets.py` | Spreadsheet 管理台帳の読み込みと成功時更新 (`status=done`) を担当 | `config`, `exceptions` | `google-api-python-client` |

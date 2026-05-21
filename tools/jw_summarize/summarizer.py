@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from langchain.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
 
 from .config import Settings
 from .exceptions import ProcessingError
