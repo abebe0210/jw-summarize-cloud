@@ -13,7 +13,7 @@ def render_notes(
     summary_markdown: str,
     settings: Settings,
 ) -> tuple[RenderedNote, RenderedNote]:
-    basename = _note_basename(title, request.stable_id)
+    basename = _note_basename(title)
     summary_path = posixpath.join(settings.obsidian_summary_dir, f"{basename}.md")
     transcript_path = posixpath.join(
         settings.obsidian_transcript_dir, f"{basename}.md"
@@ -40,9 +40,8 @@ def render_notes(
     )
 
 
-def _note_basename(title: str, stable_id: str) -> str:
-    safe_title = sanitize_filename(title)
-    return f"{safe_title}--{stable_id}"
+def _note_basename(title: str) -> str:
+    return sanitize_filename(title)
 
 
 def _obsidian_link(path: str) -> str:
